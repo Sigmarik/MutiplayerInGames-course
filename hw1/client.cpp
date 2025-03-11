@@ -56,6 +56,8 @@ int main(int argc, char** argv) {
         }
 
         client.sendString("Damn, that string sure is verifiable.");
+        client.sendString("\\join-quest");
+        client.waitForString();
         client.waitForString();
         client.sendString("\\complete");
     } else {
@@ -73,7 +75,8 @@ int main(int argc, char** argv) {
             "Yes, I will. And I'll send a verifiable string in a similar way.");
         client.sendString("VERIFIABLE");
         client.waitForString();
-        client.sendString("\\start-quest");
+        client.sendString("\\join-quest");
+        client.waitForString();
         client.waitForString();
         client.waitForString();
         client.sendString("\\complete");

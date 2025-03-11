@@ -5,6 +5,7 @@
 #include <cstring>
 #include <deque>
 #include <iostream>
+#include <set>
 
 #include "connections.h"
 
@@ -16,7 +17,7 @@ struct UserMessage {
 struct ServerStatus {
     std::deque<UserMessage> message_queue{};
     std::optional<std::string> quest_winner{};
-    bool has_active_quest = false;
+    std::set<std::string> quest_participants{};
 };
 
 static const std::string SERVER_NAME = "[SERVER]";
@@ -35,27 +36,23 @@ void pullClientMessages(ServerStatus &server, S2CConnection &client) {
         // user's answers and stuff, but I am too lazy to implement it.
         // The network part of things seems fine, though, and that's what
         // this course is about, eh?
-        if (message == "\\start-quest") {
-            server.has_active_quest = true;
-            server.quest_winner = {};
+        if (message == "\\join-quest") {
+            server.quest_participants.insert(client.getName());
 
             usr_msg.user = SERVER_NAME;
-            usr_msg.content =
-                client.getName() +
-                " started a quest. Type \"\\complete\" to complete it!";
+            usr_msg.content = client.getName() + " joined a quest.";
         } else if (message == "\\complete") {
             usr_msg.user = SERVER_NAME;
-            if (server.has_active_quest && !server.quest_winner) {
+            if (server.quest_participants.size() > 1 &&
+                server.quest_participants.find(client.getName()) !=
+                    server.quest_participants.end()) {
                 server.quest_winner = client.getName();
                 usr_msg.content =
-                    *server.quest_winner + " completed the quest first!";
-            } else if (server.quest_winner) {
-                usr_msg.content =
-                    client.getName() + " completed a quest, though " +
-                    *server.quest_winner + " has completed it before them!";
+                    *server.quest_winner + " completed the quest!";
+                server.quest_participants.clear();
             } else {
-                usr_msg.content = client.getName() +
-                                  " tried to complete a non-existent quest!";
+                usr_msg.content =
+                    client.getName() + " tried to complete a quest but failed!";
             }
         } else {
             usr_msg.user = client.getName();
